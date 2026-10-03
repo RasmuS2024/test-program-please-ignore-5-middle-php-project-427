@@ -1,0 +1,5 @@
+.env
+public/index.html
+public/assets/
+vendor/
+node_modules/
