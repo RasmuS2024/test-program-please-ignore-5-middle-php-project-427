@@ -9,6 +9,9 @@
     "build": "vite build",
     "preview": "vite preview"
   },
+  "overrides": {
+    "undici": "^7.29.1"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/RasmuS2024/test-program-please-ignore-5-middle-php-project-427.git"
@@ -22,10 +25,15 @@
   },
   "homepage": "https://github.com/RasmuS2024/test-program-please-ignore-5-middle-php-project-427#readme",
   "devDependencies": {
+    "@typespec/compiler": "^1.16.0",
+    "@typespec/http": "^1.16.0",
+    "@typespec/openapi": "^1.16.0",
+    "@typespec/openapi3": "^1.16.0",
     "vite": "^8.3.2"
   },
   "dependencies": {
     "@hexlet/php-flight-booking-frontend": "^1.0.3",
+    "@scalar/json-magic": "^0.15.1",
     "detect-libc": "^2.1.2",
     "fdir": "^6.5.0",
     "lightningcss": "^1.33.0",

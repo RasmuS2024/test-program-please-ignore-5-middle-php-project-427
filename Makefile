@@ -15,6 +15,9 @@ build:
 start:
 	php -S 0.0.0.0:$${PORT:-8080} -t public public/index.php
 
+contract:
+	npx tsp compile contract
+
 lint:
 	composer exec --verbose phpcs -- --standard=PSR12 src bin tests
 	composer exec -v phpstan analyse -- -c phpstan.neon --ansi

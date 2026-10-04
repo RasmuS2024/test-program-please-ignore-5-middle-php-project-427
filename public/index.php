@@ -22,10 +22,15 @@ if (php_sapi_name() === 'cli-server') {
 
 }
 
-
 $app = AppFactory::create();
 $app->addRoutingMiddleware();
 $app->addErrorMiddleware(true, true, true);
+
+$app->get('/api/health', function (Request $request, Response $response) {
+    $response->getBody()->write(json_encode(['status' => 'ok']));
+    return $response->withHeader('Content-Type', 'application/json; charset=utf-8');
+});
+
 
 $app->get('/api/cities', function (Request $request, Response $response) {
     $response->getBody()->write(json_encode([], JSON_UNESCAPED_UNICODE));
