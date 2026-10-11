@@ -4,21 +4,248 @@ info:
   version: 0.0.0
 tags: []
 paths:
+  /api/bookings:
+    post:
+      operationId: FlightBookingApi_createBooking
+      description: Создать бронь.
+      parameters: []
+      responses:
+        '201':
+          description: Успешный ответ 201.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          description: Ошибка 400.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+  /api/bookings/{code}:
+    get:
+      operationId: FlightBookingApi_getBooking
+      description: Просмотр брони по коду и фамилии.
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: lastName
+          in: query
+          required: true
+          schema:
+            type: string
+          explode: false
+      responses:
+        '200':
+          description: Успешный ответ 200.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '404':
+          description: Ошибка 404.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/bookings/{code}/cancel:
+    post:
+      operationId: FlightBookingApi_cancelBooking
+      description: Отмена брони.
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Успешный ответ 200.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '404':
+          description: Ошибка 404.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelBookingRequest'
   /api/cities:
     get:
-      operationId: Cities_list
+      operationId: FlightBookingApi_listCities
+      description: Справочник городов.
       parameters: []
       responses:
         '200':
-          description: The request has succeeded.
+          description: Успешный ответ 200.
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/City'
+  /api/flights:
+    get:
+      operationId: FlightBookingApi_searchFlights
+      description: Поиск рейсов.
+      parameters:
+        - name: origin
+          in: query
+          required: true
+          schema:
+            type: string
+          explode: false
+        - name: destination
+          in: query
+          required: true
+          schema:
+            type: string
+          explode: false
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          explode: false
+        - name: passengers
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 1
+          explode: false
+      responses:
+        '200':
+          description: Успешный ответ 200.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Flight'
+        '400':
+          description: Ошибка 400.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/flights/{id}:
+    get:
+      operationId: FlightBookingApi_getFlight
+      description: Рейс по идентификатору.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Успешный ответ 200.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Flight'
+        '404':
+          description: Ошибка 404.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/health:
+    get:
+      operationId: FlightBookingApi_health
+      description: 'Хелсчек: приложение поднялось и отвечает.'
+      parameters: []
+      responses:
+        '200':
+          description: Успешный ответ 200.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
 components:
   schemas:
+    Airline:
+      type: object
+      required:
+        - code
+        - name
+      properties:
+        code:
+          type: string
+          description: Код авиакомпании, например SU.
+        name:
+          type: string
+          description: Название, например Аэрофлот.
+      description: Авиакомпания.
+    Booking:
+      type: object
+      required:
+        - code
+        - status
+        - flight
+        - passengers
+        - contact
+        - totalPrice
+        - createdAt
+      properties:
+        code:
+          type: string
+          description: 'Код брони: ровно 6 символов из A-Z и 0-9.'
+        status:
+          $ref: '#/components/schemas/BookingStatus'
+        flight:
+          allOf:
+            - $ref: '#/components/schemas/Flight'
+          description: Забронированный рейс целиком.
+        passengers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Passenger'
+        contact:
+          $ref: '#/components/schemas/Contact'
+        totalPrice:
+          allOf:
+            - $ref: '#/components/schemas/Money'
+          description: Цена рейса × число пассажиров.
+        createdAt:
+          type: string
+          format: date-time
+          description: Момент создания брони.
+      description: Бронь.
+    BookingStatus:
+      type: string
+      enum:
+        - confirmed
+        - cancelled
+      description: Статус брони.
+    CancelBookingRequest:
+      type: object
+      required:
+        - lastName
+      properties:
+        lastName:
+          type: string
+      description: Тело запроса на отмену брони.
     City:
       type: object
       required:
@@ -27,7 +254,147 @@ components:
       properties:
         code:
           type: string
+          description: 'IATA-подобный код: MOW, LED.'
         name:
           type: string
+          description: 'Название на русском: Москва.'
         country:
           type: string
+          description: Страна, например Россия.
+      description: Город (аэропорт) в справочнике.
+    Contact:
+      type: object
+      required:
+        - email
+        - phone
+      properties:
+        email:
+          type: string
+        phone:
+          type: string
+      description: Контакт заказчика.
+    CreateBookingRequest:
+      type: object
+      required:
+        - flightId
+        - contact
+        - passengers
+      properties:
+        flightId:
+          type: string
+        contact:
+          $ref: '#/components/schemas/Contact'
+        passengers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Passenger'
+          description: Минимум один пассажир.
+      description: Тело запроса на создание брони.
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      description: Ошибка API.
+    Flight:
+      type: object
+      required:
+        - id
+        - flightNumber
+        - airline
+        - origin
+        - destination
+        - departureAt
+        - arrivalAt
+        - durationMinutes
+        - price
+        - seatsAvailable
+      properties:
+        id:
+          type: string
+          description: Идентификатор рейса; попадает в адрес, без пробелов и слешей.
+        flightNumber:
+          type: string
+          description: Номер рейса, например SU1234.
+        airline:
+          $ref: '#/components/schemas/Airline'
+        origin:
+          allOf:
+            - $ref: '#/components/schemas/City'
+          description: Город вылета целиком.
+        destination:
+          allOf:
+            - $ref: '#/components/schemas/City'
+          description: Город прилёта целиком.
+        departureAt:
+          type: string
+          format: date-time
+        arrivalAt:
+          type: string
+          format: date-time
+        durationMinutes:
+          type: integer
+          format: int32
+          description: Длительность в минутах.
+        price:
+          allOf:
+            - $ref: '#/components/schemas/Money'
+          description: Цена за одного пассажира.
+        seatsAvailable:
+          type: integer
+          format: int32
+          description: Свободных мест.
+      description: Рейс.
+    HealthStatus:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - ok
+      description: Ответ хелсчека.
+    Money:
+      type: object
+      required:
+        - amount
+        - currency
+      properties:
+        amount:
+          type: integer
+          format: int32
+          description: Целые рубли, без копеек.
+        currency:
+          type: string
+          enum:
+            - RUB
+          description: Всегда RUB.
+      description: Денежная сумма.
+    Passenger:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - dateOfBirth
+        - documentNumber
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        documentNumber:
+          type: string
+      description: Пассажир.
+servers:
+  - url: http://localhost:8080
+    description: Local server
+    variables: {}

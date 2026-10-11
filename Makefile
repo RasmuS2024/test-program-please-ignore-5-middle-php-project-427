@@ -33,3 +33,5 @@ test-coverage-text:
 
 test-coverage-html:
 	XDEBUG_MODE=coverage composer exec phpunit tests -- --coverage-html build/over
+
+.PHONY: update install validate build start contract lint test test-coverage test-coverage-text test-coverage-html
