@@ -1,6 +1,7 @@
 # Бекенд для бронирования авиабилетов (PHP)
 
 [![hexlet-check](https://github.com/RasmuS2024/test-program-please-ignore-5-middle-php-project-427/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/RasmuS2024/test-program-please-ignore-5-middle-php-project-427/actions)
+[![tests](https://github.com/RasmuS2024/test-program-please-ignore-5-middle-php-project-427/actions/workflows/tests.yml/badge.svg)](https://github.com/RasmuS2024/test-program-please-ignore-5-middle-php-project-427/actions/workflows/tests.yml)
 
 Реализуйте бекенд сервиса бронирования авиабилетов: справочник городов, поиск рейсов,
 оформление, просмотр и отмену брони. Фреймворк выбираете сами, данные храните в PostgreSQL.

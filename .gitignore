@@ -1,4 +1,6 @@
 .env
+.phpunit.cache/
+.phpunit.result.cache
 public/index.html
 public/assets/
 vendor/
