@@ -8,6 +8,25 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+
     steps:
       - uses: actions/checkout@v4
 
@@ -29,6 +48,9 @@ jobs:
 
       - name: Build frontend assets
         run: make build
+
+      - name: Prepare database
+        run: make migrate && make seed
 
       - name: Run tests
         run: make test

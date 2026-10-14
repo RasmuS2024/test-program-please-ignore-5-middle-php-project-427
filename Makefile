@@ -13,7 +13,15 @@ build:
 	cp -R node_modules/@hexlet/php-flight-booking-frontend/dist/. public/
 
 start:
+	php bin/migrate.php
+	php bin/seed.php
 	php -S 0.0.0.0:$${PORT:-8080} -t public public/index.php
+
+migrate:
+	php bin/migrate.php
+
+seed:
+	php bin/seed.php
 
 contract:
 	npx tsp compile contract
@@ -34,4 +42,4 @@ test-coverage-text:
 test-coverage-html:
 	XDEBUG_MODE=coverage composer exec phpunit tests -- --coverage-html build/over
 
-.PHONY: update install validate build start contract lint test test-coverage test-coverage-text test-coverage-html
+.PHONY: update install validate build start migrate seed contract lint test test-coverage test-coverage-text test-coverage-html

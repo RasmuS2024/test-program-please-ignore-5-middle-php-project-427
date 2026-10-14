@@ -5,6 +5,8 @@
   "license": "MIT",
   "autoload": {
     "files": [
+      "src/env.php",
+      "src/db.php",
       "src/app.php"
     ],
     "psr-4": {

@@ -1,5 +1,7 @@
 <?php
 
+use Hexlet\Code\Repository\CityRepository;
+use Hexlet\Code\Serializer\CitySerializer;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\App;
@@ -37,7 +39,9 @@ function createApp(): App
     });
 
     $app->get('/api/cities', function (Request $request, Response $response) {
-        $response->getBody()->write(json_encode([], JSON_UNESCAPED_UNICODE));
+        $cities = CitySerializer::many((new CityRepository(pdo()))->all());
+
+        $response->getBody()->write(json_encode($cities, JSON_UNESCAPED_UNICODE));
         return $response->withHeader('Content-Type', 'application/json; charset=utf-8');
     });
 
