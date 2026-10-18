@@ -2,9 +2,6 @@
 
 namespace Hexlet\Code\Serializer;
 
-use DateTimeImmutable;
-use DateTimeZone;
-
 final class FlightSerializer
 {
     /**
@@ -36,8 +33,8 @@ final class FlightSerializer
                 'name' => (string) $row['destination_name'],
                 'country' => (string) $row['destination_country'],
             ],
-            'departureAt' => self::toUtcIso($row['departure_at']),
-            'arrivalAt' => self::toUtcIso($row['arrival_at']),
+            'departureAt' => DateTimeSerializer::toUtcIso($row['departure_at']),
+            'arrivalAt' => DateTimeSerializer::toUtcIso($row['arrival_at']),
             'durationMinutes' => (int) $row['duration_minutes'],
             'price' => [
                 'amount' => (int) $row['price_amount'],
@@ -55,12 +52,5 @@ final class FlightSerializer
     public static function many(array $rows): array
     {
         return array_map([self::class, 'serialize'], $rows);
-    }
-
-    private static function toUtcIso(mixed $value): string
-    {
-        return (new DateTimeImmutable((string) $value, new DateTimeZone('UTC')))
-            ->setTimezone(new DateTimeZone('UTC'))
-            ->format('Y-m-d\TH:i:s\Z');
     }
 }
