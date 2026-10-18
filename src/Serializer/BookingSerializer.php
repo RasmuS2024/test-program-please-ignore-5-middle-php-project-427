@@ -7,14 +7,13 @@ final class BookingSerializer
     /**
      * Assemble the Booking response shape described by the contract.
      *
-     * @param array<string, mixed>                    $booking    row: code, status, total_price, created_at
-     * @param array<string, mixed>                    $flight     already serialized Flight
-     * @param list<array<string, mixed>>              $passengers normalized passenger input
-     * @param array{email: string, phone: string}     $contact
+     * @param array<string, mixed>       $booking    row with contact_email / contact_phone
+     * @param array<string, mixed>       $flight     already serialized Flight
+     * @param list<array<string, mixed>> $passengers booking_passengers rows
      *
      * @return array<string, mixed>
      */
-    public static function serialize(array $booking, array $flight, array $passengers, array $contact): array
+    public static function serialize(array $booking, array $flight, array $passengers): array
     {
         return [
             'code' => (string) $booking['code'],
@@ -22,16 +21,16 @@ final class BookingSerializer
             'flight' => $flight,
             'passengers' => array_map(
                 static fn (array $passenger): array => [
-                    'firstName' => (string) $passenger['firstName'],
-                    'lastName' => (string) $passenger['lastName'],
-                    'dateOfBirth' => (string) $passenger['dateOfBirth'],
-                    'documentNumber' => (string) $passenger['documentNumber'],
+                    'firstName' => (string) $passenger['first_name'],
+                    'lastName' => (string) $passenger['last_name'],
+                    'dateOfBirth' => (string) $passenger['date_of_birth'],
+                    'documentNumber' => (string) $passenger['document_number'],
                 ],
                 $passengers
             ),
             'contact' => [
-                'email' => (string) $contact['email'],
-                'phone' => (string) $contact['phone'],
+                'email' => (string) $booking['contact_email'],
+                'phone' => (string) $booking['contact_phone'],
             ],
             'totalPrice' => [
                 'amount' => (int) $booking['total_price'],

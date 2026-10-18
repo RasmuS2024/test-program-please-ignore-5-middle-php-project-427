@@ -233,4 +233,180 @@ final class BookingsTest extends TestCase
             'passenger invalid dateOfBirth' => [['passengers' => [['firstName' => 'Иван', 'lastName' => 'Петров', 'dateOfBirth' => 'not-a-date', 'documentNumber' => '1']]]],
         ];
     }
+
+    // --- booking lookup & cancellation -----------------------------------
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function createdBooking(): array
+    {
+        $flight = self::firstFlight();
+        $result = self::createBooking($flight['id'], [self::passenger()]);
+
+        self::assertSame(201, $result['status']);
+
+        return $result['body'];
+    }
+
+    private static function bookingUrl(string $code, string $lastName): string
+    {
+        return '/api/bookings/' . rawurlencode($code) . '?' . http_build_query(['lastName' => $lastName]);
+    }
+
+    private static function unusedCode(): string
+    {
+        $pdo = pdo();
+        $stmt = $pdo->prepare('SELECT 1 FROM bookings WHERE code = :code');
+
+        for ($i = 0; $i < 100; $i++) {
+            $candidate = strtoupper(substr(bin2hex(random_bytes(3)), 0, 6));
+            $stmt->execute(['code' => $candidate]);
+
+            if ($stmt->fetch() === false) {
+                return $candidate;
+            }
+        }
+
+        self::fail('Could not find an unused booking code');
+    }
+
+    public function testFindBookingByCodeAndLastName(): void
+    {
+        $booking = self::createdBooking();
+
+        $result = self::send('GET', self::bookingUrl($booking['code'], 'Петров'));
+
+        self::assertSame(200, $result['status']);
+        self::assertSame($booking, $result['body']);
+    }
+
+    public function testFindBookingIgnoresLastNameCaseAndSurroundingSpaces(): void
+    {
+        $booking = self::createdBooking();
+
+        foreach (['петров', 'ПЕТРОВ', '  Петров  ', 'пЕтРоВ'] as $variant) {
+            $result = self::send('GET', self::bookingUrl($booking['code'], $variant));
+
+            self::assertSame(200, $result['status'], "lastName variant '{$variant}' should match");
+            self::assertSame($booking['code'], $result['body']['code']);
+        }
+    }
+
+    public function testFindBookingMatchesAnyPassengerLastName(): void
+    {
+        $flight = self::firstFlight();
+        $result = self::createBooking($flight['id'], [self::passenger(), self::passenger(['lastName' => 'Сидоров'])]);
+        $code = $result['body']['code'];
+
+        self::assertSame(200, self::send('GET', self::bookingUrl($code, 'Петров'))['status']);
+        self::assertSame(200, self::send('GET', self::bookingUrl($code, 'сидоров'))['status']);
+    }
+
+    public function testFindBookingAcceptsLowerCaseCode(): void
+    {
+        $booking = self::createdBooking();
+
+        $result = self::send('GET', self::bookingUrl(strtolower($booking['code']), 'Петров'));
+
+        self::assertSame(200, $result['status']);
+        self::assertSame($booking['code'], $result['body']['code']);
+    }
+
+    public function testFindBookingWithWrongLastNameReturnsNotFound(): void
+    {
+        $booking = self::createdBooking();
+
+        $result = self::send('GET', self::bookingUrl($booking['code'], 'Иванов'));
+
+        self::assertSame(404, $result['status']);
+        self::assertSame('not_found', $result['body']['code']);
+    }
+
+    public function testFindBookingWithoutLastNameReturnsNotFound(): void
+    {
+        $booking = self::createdBooking();
+
+        $missing = self::send('GET', '/api/bookings/' . $booking['code']);
+        $empty = self::send('GET', '/api/bookings/' . $booking['code'] . '?lastName=');
+
+        self::assertSame(404, $missing['status']);
+        self::assertSame(404, $empty['status']);
+    }
+
+    public function testFindBookingWithUnknownCodeReturnsNotFound(): void
+    {
+        $result = self::send('GET', self::bookingUrl(self::unusedCode(), 'Петров'));
+
+        self::assertSame(404, $result['status']);
+        self::assertSame('not_found', $result['body']['code']);
+    }
+
+    public function testAllNotFoundBodiesAreIdentical(): void
+    {
+        $booking = self::createdBooking();
+
+        $wrongCode = self::send('GET', self::bookingUrl(self::unusedCode(), 'Петров'));
+        $wrongName = self::send('GET', self::bookingUrl($booking['code'], 'Иванов'));
+        $noName = self::send('GET', '/api/bookings/' . $booking['code']);
+        $cancelNoName = self::send('POST', '/api/bookings/' . $booking['code'] . '/cancel', []);
+        $cancelWrongCode = self::send('POST', '/api/bookings/' . self::unusedCode() . '/cancel', ['lastName' => 'Петров']);
+
+        foreach ([$wrongCode, $wrongName, $noName, $cancelNoName, $cancelWrongCode] as $result) {
+            self::assertSame(404, $result['status']);
+            self::assertSame($wrongCode['body'], $result['body']);
+        }
+    }
+
+    public function testCancelBookingReturnsCancelledStatus(): void
+    {
+        $booking = self::createdBooking();
+
+        $result = self::send('POST', '/api/bookings/' . $booking['code'] . '/cancel', ['lastName' => 'петров']);
+
+        self::assertSame(200, $result['status']);
+        self::assertSame($booking['code'], $result['body']['code']);
+        self::assertSame('cancelled', $result['body']['status']);
+        self::assertSame($booking['flight'], $result['body']['flight']);
+        self::assertSame($booking['passengers'], $result['body']['passengers']);
+    }
+
+    public function testRepeatedCancelStaysCancelled(): void
+    {
+        $booking = self::createdBooking();
+        $url = '/api/bookings/' . $booking['code'] . '/cancel';
+
+        $first = self::send('POST', $url, ['lastName' => 'Петров']);
+        $second = self::send('POST', $url, ['lastName' => 'Петров']);
+
+        self::assertSame(200, $first['status']);
+        self::assertSame(200, $second['status']);
+        self::assertSame('cancelled', $first['body']['status']);
+        self::assertSame('cancelled', $second['body']['status']);
+    }
+
+    public function testCancelWithWrongLastNameReturnsNotFoundAndKeepsConfirmed(): void
+    {
+        $booking = self::createdBooking();
+
+        $result = self::send('POST', '/api/bookings/' . $booking['code'] . '/cancel', ['lastName' => 'Иванов']);
+
+        self::assertSame(404, $result['status']);
+        self::assertSame('not_found', $result['body']['code']);
+
+        $stmt = pdo()->prepare('SELECT status FROM bookings WHERE code = :code');
+        $stmt->execute(['code' => $booking['code']]);
+
+        self::assertSame('confirmed', $stmt->fetch()['status']);
+    }
+
+    public function testCancelWithoutLastNameReturnsNotFound(): void
+    {
+        $booking = self::createdBooking();
+
+        $result = self::send('POST', '/api/bookings/' . $booking['code'] . '/cancel', []);
+
+        self::assertSame(404, $result['status']);
+        self::assertSame('not_found', $result['body']['code']);
+    }
 }

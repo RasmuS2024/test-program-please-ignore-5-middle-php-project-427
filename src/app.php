@@ -201,13 +201,14 @@ function createApp(): App
             throw new HttpBadRequestException($request, 'Рейс с указанным flightId не найден.');
         }
 
-        $booking = (new BookingRepository(pdo()))->create($flight, $normalizedContact, $passengers);
+        $bookings = new BookingRepository(pdo());
+        $booking = $bookings->create($flight, $normalizedContact, $passengers);
+        $record = $bookings->findByCode((string) $booking['code']);
 
         $payload = BookingSerializer::serialize(
-            $booking,
+            $record['booking'],
             FlightSerializer::serialize($flight),
-            $passengers,
-            $normalizedContact
+            $record['passengers']
         );
 
         $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_UNICODE));
@@ -215,6 +216,67 @@ function createApp(): App
         return $response
             ->withHeader('Content-Type', 'application/json; charset=utf-8')
             ->withStatus(201);
+    });
+
+    $normalizeCode = static fn (mixed $code): string => strtoupper(trim((string) $code));
+
+    $lastNameMatches = static function (array $passengers, string $lastName): bool {
+        $needle = mb_strtolower(trim($lastName));
+
+        if ($needle === '') {
+            return false;
+        }
+
+        foreach ($passengers as $passenger) {
+            if (mb_strtolower(trim((string) $passenger['last_name'])) === $needle) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    $loadBooking = static function (Request $request, string $code, string $lastName) use ($lastNameMatches): array {
+        $record = (new BookingRepository(pdo()))->findByCode($code);
+
+        if ($record === null || !$lastNameMatches($record['passengers'], $lastName)) {
+            throw new HttpNotFoundException($request, 'Бронь не найдена.');
+        }
+
+        $flight = (new FlightRepository(pdo()))->find((string) $record['booking']['flight_id']);
+
+        if ($flight === null) {
+            throw new HttpNotFoundException($request, 'Бронь не найдена.');
+        }
+
+        return [$record['booking'], $record['passengers'], $flight];
+    };
+
+    $app->get('/api/bookings/{code}', function (Request $request, Response $response, array $args) use ($normalizeCode, $loadBooking) {
+        $code = $normalizeCode($args['code']);
+        $lastName = (string) ($request->getQueryParams()['lastName'] ?? '');
+
+        [$booking, $passengers, $flight] = $loadBooking($request, $code, $lastName);
+
+        $payload = BookingSerializer::serialize($booking, FlightSerializer::serialize($flight), $passengers);
+
+        $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_UNICODE));
+        return $response->withHeader('Content-Type', 'application/json; charset=utf-8');
+    });
+
+    $app->post('/api/bookings/{code}/cancel', function (Request $request, Response $response, array $args) use ($normalizeCode, $loadBooking) {
+        $code = $normalizeCode($args['code']);
+        $body = $request->getParsedBody();
+        $lastName = is_array($body) ? (string) ($body['lastName'] ?? '') : '';
+
+        [, $passengers, $flight] = $loadBooking($request, $code, $lastName);
+
+        $booking = (new BookingRepository(pdo()))->cancel($code);
+
+        $payload = BookingSerializer::serialize($booking, FlightSerializer::serialize($flight), $passengers);
+
+        $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_UNICODE));
+        return $response->withHeader('Content-Type', 'application/json; charset=utf-8');
     });
 
     return $app;

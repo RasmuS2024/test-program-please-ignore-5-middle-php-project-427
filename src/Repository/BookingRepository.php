@@ -64,6 +64,57 @@ final class BookingRepository
     }
 
     /**
+     * Load a booking together with its passengers by code, or null when absent.
+     *
+     * @return array{booking: array<string, mixed>, passengers: list<array<string, mixed>>}|null
+     */
+    public function findByCode(string $code): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT code, flight_id, status, contact_email, contact_phone, total_price, created_at
+             FROM bookings
+             WHERE code = :code'
+        );
+        $stmt->execute(['code' => $code]);
+        $booking = $stmt->fetch();
+
+        if ($booking === false) {
+            return null;
+        }
+
+        $passengerStmt = $this->pdo->prepare(
+            'SELECT first_name, last_name, date_of_birth, document_number
+             FROM booking_passengers
+             WHERE booking_code = :code
+             ORDER BY id'
+        );
+        $passengerStmt->execute(['code' => $code]);
+
+        return ['booking' => $booking, 'passengers' => $passengerStmt->fetchAll()];
+    }
+
+    /**
+     * Mark a booking as cancelled and return the updated row.
+     *
+     * Cancelling an already cancelled booking is a no-op that still returns the
+     * row, so the operation is idempotent.
+     *
+     * @return array<string, mixed>
+     */
+    public function cancel(string $code): array
+    {
+        $stmt = $this->pdo->prepare(
+            'UPDATE bookings
+             SET status = \'cancelled\'
+             WHERE code = :code
+             RETURNING code, flight_id, status, contact_email, contact_phone, total_price, created_at'
+        );
+        $stmt->execute(['code' => $code]);
+
+        return $stmt->fetch();
+    }
+
+    /**
      * @param array{email: string, phone: string} $contact
      *
      * @return array<string, mixed>
