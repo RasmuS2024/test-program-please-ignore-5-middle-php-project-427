@@ -37,7 +37,6 @@
     "detect-libc": "^2.1.2",
     "fdir": "^6.5.0",
     "lightningcss": "^1.33.0",
-    "lightningcss-linux-x64-gnu": "^1.33.0",
     "nanoid": "^3.3.19",
     "picocolors": "^1.1.1",
     "picomatch": "^4.0.7",
@@ -45,5 +44,8 @@
     "rolldown": "^1.2.12",
     "source-map-js": "^1.2.2",
     "tinyglobby": "^0.2.17"
+  },
+  "optionalDependencies": {
+    "lightningcss-linux-x64-musl": "^1.33.0"
   }
 }
