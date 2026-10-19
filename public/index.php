@@ -10,7 +10,7 @@ if (php_sapi_name() === 'cli-server') {
         return false;
     }
 
-    if (!str_starts_with($path, '/api/')) {
+    if ($path !== '/api' && !str_starts_with($path, '/api/')) {
         header('Content-Type: text/html; charset=utf-8');
         readfile(__DIR__ . '/index.html');
         exit;

@@ -95,10 +95,14 @@ try {
 
             for ($day = 0; $day < $days; $day++) {
                 $date = $today->modify("+{$day} days");
-                $count = 2 + deterministicInt("{$origin}-{$destination}-{$day}-count", 0, 1);
+                // Ключ — календарная дата, а не индекс дня: иначе повторный сид в другой
+                // день сгенерировал бы для пересекающихся дат другие минуты/номера и
+                // добавил бы второй набор рейсов вместо upsert.
+                $dateKey = $date->format('Y-m-d');
+                $count = 2 + deterministicInt("{$origin}-{$destination}-{$dateKey}-count", 0, 1);
 
                 for ($index = 0; $index < $count; $index++) {
-                    $key = "{$origin}-{$destination}-{$day}-{$index}";
+                    $key = "{$origin}-{$destination}-{$dateKey}-{$index}";
 
                     $airline = $airlineCodes[deterministicInt("{$key}-airline", 0, count($airlineCodes) - 1)];
                     $duration = deterministicInt("{$key}-duration", 80, 280);
