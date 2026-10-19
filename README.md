@@ -117,11 +117,7 @@ docker run --rm -e PORT=8080 \
 
 ### Демо (asciinema)
 
-[![asciicast](https://asciinema.org/a/ОБНОВИТЬ.svg)](https://asciinema.org/a/ОБНОВИТЬ)
-
-Чтобы записать демонстрацию, выполните `asciinema rec demo.cast`, пройдите сценарий — поиск рейса →
-оформление брони → поиск по коду и фамилии → отмена, — затем `asciinema upload demo.cast` и
-замените `ОБНОВИТЬ` в ссылке выше на полученный идентификатор.
+[![asciicast](https://asciinema.org/a/MNhqUkiZHq5DkPdq.svg)](https://asciinema.org/a/MNhqUkiZHq5DkPdq)
 
 ---
 
