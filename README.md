@@ -117,7 +117,7 @@ docker run --rm -e PORT=8080 \
 
 ### Демо (asciinema)
 
-[![asciicast](https://asciinema.org/a/MNhqUkiZHq5DkPdq.svg)](https://asciinema.org/a/MNhqUkiZHq5DkPdq)
+<script src="https://asciinema.org/a/MNhqUkiZHq5DkPdq.js" id="asciicast-MNhqUkiZHq5DkPdq" async="true"></script>
 
 ---
 
