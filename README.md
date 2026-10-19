@@ -117,7 +117,9 @@ docker run --rm -e PORT=8080 \
 
 ### Демо (asciinema)
 
-<script src="https://asciinema.org/a/MNhqUkiZHq5DkPdq.js" id="asciicast-MNhqUkiZHq5DkPdq" async="true"></script>
+[![asciicast](https://asciinema.org/a/MNhqUkiZHq5DkPdq.svg)](https://asciinema.org/a/MNhqUkiZHq5DkPdq)
+
+Демонстрация: поиск рейса → оформление брони → поиск по коду и фамилии → отмена.
 
 ---
 
