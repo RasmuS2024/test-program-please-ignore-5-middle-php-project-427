@@ -1,5 +1,9 @@
 <?php
 
+namespace Hexlet\Code\Tests;
+
+use DateTimeImmutable;
+use DateTimeZone;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Slim\Psr7\Factory\ServerRequestFactory;
@@ -191,6 +195,22 @@ final class BookingsTest extends TestCase
 
         self::assertSame(400, $result['status']);
         self::assertSame('validation_error', $result['body']['code']);
+    }
+
+    public function testMalformedJsonIsValidationError(): void
+    {
+        $app = createApp();
+
+        $request = (new ServerRequestFactory())
+            ->createServerRequest('POST', '/api/bookings')
+            ->withHeader('Accept', 'application/json')
+            ->withHeader('Content-Type', 'application/json')
+            ->withBody((new StreamFactory())->createStream('{"flightId":'));
+
+        $response = $app->handle($request);
+
+        self::assertSame(400, $response->getStatusCode());
+        self::assertSame('validation_error', json_decode((string) $response->getBody(), true)['code']);
     }
 
     /**

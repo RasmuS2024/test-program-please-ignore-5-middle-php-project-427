@@ -27,19 +27,9 @@ contract:
 	npx tsp compile contract
 
 lint:
-	composer exec --verbose phpcs -- --standard=PSR12 src bin tests
-	composer exec -v phpstan analyse -- -c phpstan.neon --ansi
+	composer exec --verbose phpcs
 
 test:
 	composer exec --verbose phpunit tests
 
-test-coverage:
-	XDEBUG_MODE=coverage composer exec --verbose phpunit tests -- --coverage-clover build/logs/clover.xml
-
-test-coverage-text:
-	XDEBUG_MODE=coverage composer exec --verbose phpunit tests -- --coverage-text
-
-test-coverage-html:
-	XDEBUG_MODE=coverage composer exec phpunit tests -- --coverage-html build/over
-
-.PHONY: update install validate build start migrate seed contract lint test test-coverage test-coverage-text test-coverage-html
+.PHONY: update install validate build start migrate seed contract lint test

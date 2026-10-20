@@ -7,3 +7,6 @@ vendor/
 node_modules/
 AGENTS.md
 demo.cast
+.idea/
+composer.phar
+не_понятно.txt

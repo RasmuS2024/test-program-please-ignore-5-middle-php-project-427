@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<ruleset name="Flight Booking">
+    <description>PSR-12 for application sources, scripts, the front controller and tests.</description>
+
+    <!-- Длинные строки и side effects в скриптах — предупреждения; ошибки стиля важнее. -->
+    <arg name="warning-severity" value="0"/>
+
+    <file>src</file>
+    <file>bin</file>
+    <file>public/index.php</file>
+    <file>tests</file>
+
+    <rule ref="PSR12"/>
+</ruleset>

@@ -1,5 +1,7 @@
 <?php
 
+namespace Hexlet\Code\Tests;
+
 use PHPUnit\Framework\TestCase;
 use Slim\Psr7\Factory\ServerRequestFactory;
 

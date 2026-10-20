@@ -102,6 +102,7 @@ curl -s -X POST http://localhost:8080/api/bookings/ABC123/cancel \
 
 ```bash
 make test        # PHPUnit (нужна доступная база)
+make lint        # PSR-12 (phpcs)
 make contract    # пересборка contract/openapi.yaml из TypeSpec
 make validate    # проверка composer.json
 ```

@@ -1,5 +1,9 @@
 <?php
 
+namespace Hexlet\Code\Tests;
+
+use DateTimeImmutable;
+use DateTimeZone;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Slim\Psr7\Factory\ServerRequestFactory;

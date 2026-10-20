@@ -21,7 +21,7 @@ function createApp(): App
     $app->addRoutingMiddleware();
     $app->addBodyParsingMiddleware();
 
-    $errorMiddleware = $app->addErrorMiddleware(true, true, true);
+    $errorMiddleware = $app->addErrorMiddleware(false, true, true);
     $errorMiddleware->setDefaultErrorHandler(
         function (Request $request, Throwable $exception) use ($app): Response {
             $statusCode = $exception instanceof HttpException ? $exception->getCode() : 500;
@@ -32,7 +32,9 @@ function createApp(): App
                 default => 'internal_server_error',
             };
 
-            $payload = ['code' => $code, 'message' => $exception->getMessage()];
+            // Детали исключения пишутся в лог middleware, а клиент не должен видеть SQL/PDO.
+            $message = $statusCode >= 500 ? 'Внутренняя ошибка сервера.' : $exception->getMessage();
+            $payload = ['code' => $code, 'message' => $message];
             $response = $app->getResponseFactory()->createResponse($statusCode);
             $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_UNICODE));
 
